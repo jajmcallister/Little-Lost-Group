@@ -1,0 +1,30 @@
+pars = default_pars(T=10, rE1_init=0.5, rE2_init=0.4, rI_init=0.2)
+rE1, rE2, rI = simulate_wc(wE1E2= 0, wE2E1= 0, **pars)
+
+@widgets.interact(
+    n_t=widgets.IntSlider(0, min=0, max=len(pars['range_t']) - 1, step=1)
+)
+
+
+def plot_activity_phase(n_t):
+  plt.figure(figsize=(8, 5.5))
+  plt.subplot(211)
+  plt.plot(pars['range_t'], rE1, 'r', label=r'$r_{E1}$')
+  plt.plot(pars['range_t'], rE2, 'g', label=r'$r_{E2}$')
+  plt.plot(pars['range_t'], rI, 'b', label=r'$r_I$')
+  plt.plot(pars['range_t'][n_t], rE1[n_t], 'o')
+  plt.plot(pars['range_t'][n_t], rE2[n_t], 'o')
+  plt.plot(pars['range_t'][n_t], rI[n_t], 'o')
+  plt.axvline(pars['range_t'][n_t], 0, 1, color='k', ls='--')
+  plt.xlabel('t (ms)', fontsize=14)
+  plt.ylabel('Activity', fontsize=14)
+  plt.legend(loc='best', fontsize=14)
+
+  plt.subplot(212, projection='3d')
+  plt.plot(rE1, rE2, rI, 'k')
+  plt.plot(rE1[n_t], rE2[n_t], rI[n_t], 'ko')
+  plt.xlabel(r'$r_{E1}$', fontsize=18, color='r')
+  plt.ylabel(r'$r_{E2}$', fontsize=18, color='g')
+
+  plt.tight_layout()
+  plt.show()
