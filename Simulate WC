@@ -56,3 +56,23 @@ plt.legend()
 plt.show()
 
 print(pars['I_ext_E1'])
+
+
+@widgets.interact(
+    rE1_init=widgets.FloatSlider(0.32, min=0.30, max=0.55, step=.01),
+    rE2_init=widgets.FloatSlider(0.32, min=0.30, max=0.55, step=.01)
+)
+
+def plot_EI_diffinitial(rE1_init=0.0, rE2_init=0.0):
+
+  pars = default_pars(rE1_init= rE1_init, rE2_init = rE2_init, rI_init=.15)
+  rE1, rE2, rI = simulate_wc(wE1E2= 0, wE2E1= 0, **pars)
+
+  plt.figure()
+  plt.plot(pars['range_t'], rE1, 'r', label='E1 population')
+  plt.plot(pars['range_t'], rE2, 'g', label='E2 population')
+  plt.plot(pars['range_t'], rI, 'b', label='I population')
+  plt.xlabel('t (ms)')
+  plt.ylabel('Activity')
+  plt.legend(loc='best')
+  plt.show()
