@@ -1,0 +1,58 @@
+def simulate_wc(tau_E1, a_E1, theta_E1, tau_E2, a_E2, theta_E2, tau_I, a_I, theta_I,
+                wE1E1, wE2E2, wE1E2, wE2E1, wE1I, wE2I, wIE1, wIE2, wII, I_ext_E1, I_ext_E2, I_ext_I,
+                rE1_init, rE2_init, rI_init, dt, range_t, **other_pars):
+  """
+  Simulate the Wilson-Cowan equations
+
+  Args:
+    Parameters of the Wilson-Cowan model
+
+  Returns:
+    rE1, rE2, rI (arrays) : Activity of excitatory and inhibitory populations
+  """
+  # Initialize activity arrays
+  Lt = range_t.size
+  rE1 = np.append(rE1_init, np.zeros(Lt - 1))
+  rE2 = np.append(rE2_init, np.zeros(Lt - 1))
+  rI = np.append(rI_init, np.zeros(Lt - 1))
+  I_ext_E1 = I_ext_E1 * np.ones(Lt)
+  I_ext_E2 = I_ext_E2 * np.ones(Lt)
+  I_ext_I = I_ext_I * np.ones(Lt)
+
+  # Simulate the Wilson-Cowan equations
+  for k in range(Lt - 1):
+
+    # Calculate the derivative of the E1 population
+    drE1 = dt / tau_E1 * (-rE1[k] + F(wE1E1 * rE1[k] + wE1E2 * rE2[k] - wE1I * rI[k] + I_ext_E1[k],
+                                   a_E1, theta_E1))
+    
+    # Calculate the derivative of the E2 population
+    drE2 = dt / tau_E2 * (-rE2[k] + F(wE2E2 * rE2[k] + wE2E1 * rE1[k] - wE2I * rI[k] + I_ext_E2[k],
+                                   a_E2, theta_E2))
+
+    # Calculate the derivative of the I population
+    drI = dt / tau_I * (-rI[k] + F(wIE1 * rE1[k] + wIE2 * rE2[k] - wII * rI[k] + I_ext_I[k],
+                                   a_I, theta_I))
+
+    # Update using Euler's method
+    rE1[k + 1] = rE1[k] + drE1
+    rE2[k + 1] = rE2[k] + drE2
+    rI[k + 1] = rI[k] + drI
+
+  return rE1, rE2, rI
+
+
+pars = default_pars()
+
+# Simulate a trajectory
+rE1, rE2, rI = simulate_wc(wE1E2= 0, wE2E1= 0, **default_pars(rE1_init=0.59, rE2_init=.29, rI_init=.15))
+
+plt.figure()
+plt.plot(rE1, 'r', label = 'E1 population')
+plt.plot(rE2, 'g', label = 'E2 population')
+plt.plot(rI, 'b', label = 'I population')
+plt.ylabel('Activity')
+plt.legend()
+plt.show()
+
+print(pars['I_ext_E1'])
