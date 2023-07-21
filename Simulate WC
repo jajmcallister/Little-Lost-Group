@@ -76,3 +76,58 @@ def plot_EI_diffinitial(rE1_init=0.0, rE2_init=0.0):
   plt.ylabel('Activity')
   plt.legend(loc='best')
   plt.show()
+
+
+@widgets.interact(
+    I_ext_E1=widgets.FloatSlider(6., min=0.0, max=10., step=0.01),
+    I_ext_E2=widgets.FloatSlider(6., min=0.0, max=10., step=0.01),
+    wE1E1=widgets.FloatSlider(6., min=0.0, max=10., step=0.01),
+    wE2E2=widgets.FloatSlider(6., min=0.0, max=10., step=0.01),
+    wE1I=widgets.FloatSlider(6., min=0.01, max=10., step=0.01),
+    wE2I=widgets.FloatSlider(6., min=0.01, max=10., step=0.01),
+    wIE1=widgets.FloatSlider(6., min=0.01, max=10., step=0.01),
+    wIE2=widgets.FloatSlider(6., min=0.01, max=10., step=0.01)
+)
+
+def plot_nullcline_diffwEE(I_ext_E1, I_ext_E2, wE1E1, wE2E2, wE1I, wE2I, wIE1, wIE2):
+  """
+    plot nullclines for different values of I_ext_E1, I_ext_E2, wE1E1, wE2E2, wE1I, wE2I, wIE1, wIE2
+  """
+
+  pars = default_pars(I_ext_E1=I_ext_E1, I_ext_E2=I_ext_E2, wE1E1=wE1E1, wE2E2=wE2E2, wE1I=wE1I, wE2I=wE2I, wIE1=wIE1, wIE2=wIE2)
+
+  # plot the E, I nullclines
+  Exc1_null_rE1 = np.linspace(-0.01, 0.96, 100)
+  Exc2_null_rE2 = np.linspace(-0.01, 0.96, 100)
+
+  # Compute nullclines
+  Exc1_null_rE2 = get_E1_nullcline(Exc1_null_rE1, **pars)
+  Exc2_null_rE1 = get_E2_nullcline(Exc2_null_rE2, **pars)
+
+
+  plt.figure(figsize=(12, 5.5))
+
+  plt.subplot(222)
+  pars['rE1_init'], pars['rE2_init'] = 0.2, 0.2
+  rE1, rE2, _ = simulate_wc(**pars)
+  plt.plot(pars['range_t'], rE1, 'r', label='E1 population', clip_on=False)
+  plt.plot(pars['range_t'], rE2, 'g', label='E2 population', clip_on=False)
+  plt.plot(pars['range_t'], rI, 'b', label='I population', clip_on=False)
+  plt.ylabel('Activity')
+  plt.legend(loc='best')
+  plt.ylim(-0.05, 1.05)
+  plt.title('E1/E2/I activity\nfor different initial conditions',
+            fontweight='bold')
+
+  plt.subplot(224)
+  pars['rE1_init'], pars['rE2_init'] = 0.4, 0.1
+  rE1, rE2, _ = simulate_wc(**pars)
+  plt.plot(pars['range_t'], rE1, 'r', label='E1 population', clip_on=False)
+  plt.plot(pars['range_t'], rE2, 'g', label='E2 population', clip_on=False)
+  plt.plot(pars['range_t'], rI, 'b', label='I population', clip_on=False)
+  plt.xlabel('t (ms)')
+  plt.ylabel('Activity')
+  plt.ylim(-0.05, 1.05)
+
+  plt.tight_layout()
+  plt.show()
