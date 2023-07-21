@@ -1,0 +1,19 @@
+def EIderivs(rE1, rE2,
+             tau_E1, tau_E2, a_E1, a_E2, theta_E1, theta_E2, gamma, wE1E1, wE2E2, wE1E2, wE2E1, wE1I, wE2I, I_ext_E1, I_ext_E2,
+             tau_I, a_I, theta_I, wIE1, wIE2, wII, I_ext_I,
+             **other_pars):
+  """Time derivatives for E/I variables (dE/dt, dI/dt)."""
+
+  rI = (gamma*(wIE1*rE1 + wIE2*rE2 + I_ext_I))/(1+gamma*wII)
+  # Compute the derivative of rE1
+  drE1dt = (-rE1 + F(wE1E1 * rE1 + wE1E2 * rE2 - wE1I * rI + I_ext_E1, a_E1, theta_E1))/tau_E1
+
+  # Compute the derivative of rE2
+  drE2dt = (-rE2 + F(wE2E2 * rE2 + wE2E1 * rE1 - wE2I * rI + I_ext_E2, a_E2, theta_E2))/tau_E2
+
+  return drE1dt, drE2dt
+
+
+
+# Create vector field using EIderivs
+plot_complete_analysis(default_pars())
