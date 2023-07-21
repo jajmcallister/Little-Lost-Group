@@ -1,6 +1,6 @@
-def get_E1_nullcline(rE, a_E, theta_E, wEE, wEI, I_ext_E, **other_pars):
+def get_E1_nullcline(rE1, gamma, a_E1, theta_E1, wE1E1, wE1E2, wE2E1, wE2E2, wE1I, wE2I, wII, wIE1, wIE2, I_ext_E1, I_ext_I, **other_pars):
   """
-  Solve for rI along the rE from drE/dt = 0.
+  Solve for rE2 along the rE1 from drE1/dt = 0.
 
   Args:
     rE    : response of excitatory population
@@ -10,15 +10,15 @@ def get_E1_nullcline(rE, a_E, theta_E, wEE, wEI, I_ext_E, **other_pars):
   Returns:
     rI    : values of inhibitory population along the nullcline on the rE
   """
-  # calculate rI for E nullclines on rI
-  rI = 1 / wEI * (wEE * rE - F_inv(rE, a_E, theta_E) + I_ext_E)
+  # calculate rE2
+  rE2 = (1/(wE1E2 - ((gamma * wE1I * wIE2)/(1+gamma*wII))))*(F_inv(rE1, a_E1, theta_E1)-wE1E1*rE1 + (gamma*wE1I/(1+gamma*wII))*(wIE1*rE1 + I_ext_I) - I_ext_E1)
 
-  return rI
+  return rE2
 
 
-def get_I_nullcline(rI, a_I, theta_I, wIE, wII, I_ext_I, **other_pars):
+def get_E2_nullcline(rE2, gamma, a_E2, theta_E2, wE1E1, wE1E2, wE2E1, wE2E2, wE1I, wE2I, wII, wIE1, wIE2, I_ext_E2, I_ext_I, **other_pars):
   """
-  Solve for E along the rI from dI/dt = 0.
+  Solve for rE1 along the rE2 from drE2/dt = 0.
 
   Args:
     rI    : response of inhibitory population
@@ -28,20 +28,23 @@ def get_I_nullcline(rI, a_I, theta_I, wIE, wII, I_ext_I, **other_pars):
   Returns:
     rE    : values of the excitatory population along the nullcline on the rI
   """
-  # calculate rE for I nullclines on rI
-  rE = 1 / wIE * (wII * rI + F_inv(rI, a_I, theta_I) - I_ext_I)
 
-  return rE
+  # calculate rE1
+  rE1 = (1/(wE2E1 - ((gamma * wE2I * wIE1)/(1+gamma*wII))))*(F_inv(rE2, a_E2, theta_E2)-wE2E2*rE2 + (gamma*wE2I/(1+gamma*wII))*(wIE2*rE2 + I_ext_I) - I_ext_E2)
+
+  return rE1
 
 
 # Set parameters
 pars = default_pars()
-Exc_null_rE = np.linspace(-0.01, 0.96, 100)
-Inh_null_rI = np.linspace(-.01, 0.8, 100)
+Exc1_null_rE1 = np.linspace(-0.01, 0.96, 100)
+Exc2_null_rE2 = np.linspace(-0.01, 0.96, 100)
 
 # Compute nullclines
-Exc_null_rI = get_E_nullcline(Exc_null_rE, **pars)
-Inh_null_rE = get_I_nullcline(Inh_null_rI, **pars)
+Exc1_null_rE2 = get_E1_nullcline(Exc1_null_rE1, **pars)
+Exc2_null_rE1 = get_E2_nullcline(Exc2_null_rE2, **pars)
 
 # Visualize
-plot_nullclines(Exc_null_rE, Exc_null_rI, Inh_null_rE, Inh_null_rI)
+plot_nullclines(Exc1_null_rE1, Exc1_null_rE2, Exc2_null_rE1, Exc2_null_rE2)
+
+
