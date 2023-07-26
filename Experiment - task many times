@@ -1,0 +1,71 @@
+def simulate_task_manytimes_experiment(n_times, p, I_correct, I_incorrect, **other_pars):
+  """
+  Iterate simulate_task_wc many times and save the results as a matrix
+  """
+  #get values of params
+  tau_E1, a_E1, theta_E1 = pars['tau_E1'], pars['a_E1'], pars['theta_E1']
+  tau_E2, a_E2, theta_E2 = pars['tau_E2'], pars['a_E2'], pars['theta_E2']
+  wE1E1, wE1E2 = pars['wE1E1'], pars['wE1E2']
+  wE2E1, wE2E2 = pars['wE2E1'], pars['wE2E2']
+  I_ext_E1, I_ext_E2, I_ext_I = pars['I_ext_E1'], pars['I_ext_E2'], pars['I_ext_I']
+  gamma = pars['gamma']
+  wIE1, wIE2, wII, wE1I, wE2I = pars['wIE1'],pars['wIE2'],pars['wII'], pars['wE1I'], pars['wE2I']
+  range_t = pars['range_t']
+
+
+  #get length of time
+  Lt = range_t.size
+  #Initialize a matrix
+  rE1_trials_stp=np.zeros((n_times, Lt))
+  rE2_trials_stp=np.zeros((n_times, Lt))
+  rI_trials_stp=np.zeros((n_times, Lt))
+  rE1_trials=np.zeros((n_times, Lt))
+  rE2_trials=np.zeros((n_times, Lt))
+  rI_trials=np.zeros((n_times, Lt))
+
+  #Iterate
+  for i in range(n_times):
+      #Simulate a noisy input
+      I_task_E1, I_task_E2 = get_task_input(p, I_correct, I_incorrect, **pars)
+      #Simulate a trajectory
+      rE1, rE2, rI = simulate_task_wc_stp(I_task_E1, I_task_E2, **pars)
+      rrE1, rrE2, rrI = simulate_task_wc(I_task_E1, I_task_E2, **pars)
+      #save values
+      rE1_trials_stp[i,:]=rE1
+      rE2_trials_stp[i,:]=rE2
+      rI_trials_stp[i,:]=rI
+      rE1_trials[i,:]=rrE1
+      rE2_trials[i,:]=rrE2
+      rI_trials[i,:]=rrI
+  return(rE1_trials_stp, rE2_trials_stp, rI_trials_stp, rE1_trials, rE2_trials, rI_trials)
+
+def plot_task_simulation_stp(n_times, rE1_trials_stp, rE2_trials_stp, rI_trials_stp, rE1_trials, rE2_trials, rI_trials):
+  """
+  Plot the results of simulate_task_manytimes
+  """
+  plt.figure()
+  for i in range(n_times):
+      plt.subplot(2, 1, 1)
+      plt.plot(rE1_trials_stp[i,:], '#1AFF1A', alpha=0.5)
+      plt.plot(rE2_trials_stp[i,:], '#4B0092', alpha=0.5)
+      plt.ylabel('Activity')
+
+      plt.subplot(2, 1, 2)
+      plt.plot(rE1_trials[i,:], 'm', alpha=0.5)
+      plt.plot(rE2_trials[i,:], 'c', alpha=0.5)
+      plt.ylabel('Activity')
+
+  plt.subplot(2, 1, 1)
+  plt.plot(rE1_trials_stp[0,:], '#1AFF1A', label='E1 with STP')
+  plt.plot(rE2_trials_stp[0,:], '#4B0092', label='E2 with STP')
+  plt.legend()
+  plt.subplot(2, 1, 2)
+  plt.plot(rE1_trials[0,:], 'm', label='E1 without STP')
+  plt.plot(rE2_trials[0,:], 'c', label='E2 without STP')
+  plt.legend()
+  plt.show()
+
+n_times=50
+p=0.7
+rE1_trials_stp, rE2_trials_stp, rI_trials_stp, rE1_trials, rE2_trials, rI_trials = simulate_task_manytimes_experiment(n_times, p, I_correct=2, I_incorrect=1, **pars)
+plot_task_simulation_stp(n_times, rE1_trials_stp, rE2_trials_stp, rI_trials_stp, rE1_trials, rE2_trials, rI_trials)
