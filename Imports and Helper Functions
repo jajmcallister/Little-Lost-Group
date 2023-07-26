@@ -9,41 +9,50 @@ def default_pars(**kwargs):
   pars = {}
 
  # Excitatory parameters
-  pars['tau_E1'] = 2.     # Timescale of the E1 population [ms]
+  pars['tau_E1'] = 1.     # Timescale of the E1 population [ms]
   pars['a_E1'] = 1.2      # Gain of the E1 population
   pars['theta_E1'] = 2.8  # Threshold of the E1 population
-  pars['tau_E2'] = 2.     # Timescale of the E2 population [ms]
+  pars['tau_E2'] = 1.     # Timescale of the E2 population [ms]
   pars['a_E2'] = 1.2      # Gain of the E2 population
   pars['theta_E2'] = 2.8  # Threshold of the E2 population
 
   # Inhibitory parameters
-  pars['tau_I'] = 1.0    # Timescale of the I population [ms]
+  pars['tau_I'] = 2.0    # Timescale of the I population [ms]
   pars['a_I'] = 1.0      # Gain of the I population
   pars['theta_I'] = 4.0  # Threshold of the I population
-  pars['gamma'] = 5.       # Slope of the linear input-output function
+  pars['gamma'] = 1.5     # Slope of the linear input-output function
 
   # Connection strength
-  pars['wE1E1'] = 2.   # E1 to E1
-  pars['wE2E2'] = 1.   # E2 to E2
+  pars['wE1E1'] = 9.   # E1 to E1
+  pars['wE2E2'] = 9.   # E2 to E2
   pars['wE1E2'] = 0    # E1 to E2
   pars['wE2E1'] = 0    # E2 to E0
   pars['wE1I'] = 1.8   # I to E1
-  pars['wE2I'] = -1.5   # I to E2
+  pars['wE2I'] = 1.8   # I to E2
   pars['wIE1'] = 2.  # E1 to I
-  pars['wIE2'] = -1.4  # E2 to I
+  pars['wIE2'] = 2  # E2 to I
   pars['wII'] = 0.  # I to I
 
   # External input
-  pars['I_ext_E1'] = 1.
-  pars['I_ext_E2'] = 4.
+  pars['I_ext_E1'] = 1.6
+  pars['I_ext_E2'] = 1.6
   pars['I_ext_I'] = 0.
 
   # simulation parameters
   pars['T'] = 50.        # Total duration of simulation [ms]
-  pars['dt'] = .1        # Simulation time step [ms]
-  pars['rE1_init'] = 0.2  # Initial value of E1
-  pars['rE2_init'] = 0.2  # Initial value of E2
-  pars['rI_init'] = 0.1  # Initial value of I
+  pars['dt'] = .01        # Simulation time step [ms]
+  pars['rE1_init'] = 0.5  # Initial value of E1
+  pars['rE2_init'] = 0.5  # Initial value of E2
+  pars['rI_init'] = 0.2  # Initial value of I
+
+  #STP parameters
+  pars['tau_s'] = 100     #time constant of s, as per paper
+  pars['tau_u'] = 650     #time constant of u, idem
+  pars['tau_x'] = 150     #time constant of x, idem
+  pars['U'] = 0.5         #Increment of s produced by a spike
+  pars['x_init'] = 1      #Initial value of x
+  pars['u_init'] = 0      #initial value of u
+  pars['s_init'] = 0.5
 
   # External parameters if any
   for k in kwargs:
@@ -143,9 +152,9 @@ def plot_nullclines(Exc_null_rE, Exc_null_rI, Inh_null_rE, Inh_null_rI):
   plt.show()
 
 def my_plot_nullcline(pars):
-  Exc1_null_rE1 = np.linspace(-0.01, 0.96, 100)
+  Exc1_null_rE1 = np.linspace(-0.2, 0.96, 1000)
   Exc1_null_rE2 = get_E1_nullcline(Exc1_null_rE1, **pars)
-  Exc2_null_rE2 = np.linspace(-.01, 0.96, 100)
+  Exc2_null_rE2 = np.linspace(-.2, 0.96, 1000)
   Exc2_null_rE1 = get_E2_nullcline(Exc2_null_rE2, **pars)
 
   # Compute nullclines
@@ -213,8 +222,8 @@ def plot_complete_analysis(pars):
   plt.figure(figsize=(7.7, 6.))
 
   # plot example trajectories
-  my_plot_trajectories(pars, 0.2, 10,
-                       'Sample trajectories \nfor different init. conditions')
+  my_plot_trajectories(pars, 0.2, 6,
+                        'Sample trajectories \nfor different init. conditions')
   # my_plot_trajectory(pars, 'm', [0.6, 0.6, 0.8],
   #                    'Sample trajectory for \nlow activity')
   # my_plot_trajectory(pars, 'orange', [0.6, 0.6, 0.6],
