@@ -1,0 +1,150 @@
+
+#Simulate input current values:
+
+
+def get_task_input(p, I_correct, I_incorrect, noise='binomial', **other_pars):
+  """
+  Simulate two arrays of input with some noise to perform a decision-making task.
+
+  Args:
+
+    p :(int) Bernouilli probability of population E1 getting the input for
+    correct response
+
+    I_correct :(int) Input corresponding to the correct decision
+
+    I_incorrect :(int) Input corresponding to the incorrect decision
+
+    noise: (str) Type of noise in the model. For now, only 'binomial'
+
+
+  Returns:
+
+    I_task_E1, I_task_E2: (np.array) Inputs per timestep to each population on
+    an iteration of the task.
+
+
+  """
+  #get pars
+  T = pars['T']
+  dt = pars['dt']
+  range_t = np.arange(0, T, dt)
+  #Initialize input arrays
+  I_task_E1 = np.ones(range_t.size)
+  I_task_E2 = np.ones(range_t.size)
+  if noise=='binomial':
+      #flip a coin in every timestep
+      coin = np.random.binomial(n = 1, p=p, size=len(range_t))
+      #Input to E1 is I_correct when coin is 1
+      #Input for E2 is I_incorrect when coin is 0
+      for i, value in enumerate(coin):
+          if value ==1:
+              I_task_E1[i]=I_correct
+              I_task_E2[i]=I_incorrect
+          else:
+              I_task_E1[i]=I_incorrect
+              I_task_E2[i]=I_correct
+  else:
+      print('no other noise implemented')
+  return I_task_E1, I_task_E2
+
+# Create the function to simulate experimental trajectories
+def simulate_task_wc(I_task_E1, I_task_E2, tau_E1, a_E1, theta_E1, tau_E2, a_E2, theta_E2, tau_I, a_I, theta_I,
+                wE1E1, wE2E2, wE1E2, wE2E1, wE1I, wE2I, wIE1, wIE2, wII, I_ext_E1, I_ext_E2, I_ext_I,
+                rE1_init, rE2_init, rI_init, dt, range_t, gamma, **other_pars):
+  """
+  Simulate the Wilson-Cowan equations performing the task in get_task_input
+
+  Args:
+    I_task_E1: task-specific input to E1 as per get_task_input
+    I_task_E2: task-specific input to E2 as per get_task_input
+    Parameters of the Wilson-Cowan model
+
+  Returns:
+    rE1, rE2, rI (arrays) : Activity of excitatory and inhibitory populations
+  """
+  # Initialize activity arrays
+  Lt = range_t.size
+  rE1 = np.append(rE1_init, np.zeros(Lt - 1))
+  rE2 = np.append(rE2_init, np.zeros(Lt - 1))
+  rI = np.append(rI_init, np.zeros(Lt - 1))
+  I_ext_E1 = I_task_E1
+  I_ext_E2 = I_task_E2
+  I_ext_I = I_ext_I * np.ones(Lt)
+
+  # Simulate the Wilson-Cowan equations
+  for k in range(Lt - 1):
+
+    #update the state of the I population
+    rI[k] = (gamma*(wIE1*rE1[k] + wIE2*rE2[k] + I_ext_I[k]))/(1+gamma*wII)
+
+    # Calculate the derivative of the E1 population
+    drE1 = dt / tau_E1 * (-rE1[k] + F(wE1E1 * rE1[k] + wE1E2 * rE2[k] - wE1I * rI[k] + I_ext_E1[k],
+                                   a_E1, theta_E1))
+
+    # Calculate the derivative of the E2 population
+    drE2 = dt / tau_E2 * (-rE2[k] + F(wE2E2 * rE2[k] + wE2E1 * rE1[k] - wE2I * rI[k] + I_ext_E2[k],
+                                   a_E2, theta_E2))
+
+
+    # Update using Euler's method
+    rE1[k + 1] = rE1[k] + drE1
+    rE2[k + 1] = rE2[k] + drE2
+
+  return rE1, rE2, rI
+
+
+#feed them to the model many many times
+def simulate_task_manytimes(n_times, p, I_correct, I_incorrect, **other_pars):
+  """
+  Iterate simulate_task_wc many times and save the results as a matrix
+  """
+  #get values of params
+  tau_E1, a_E1, theta_E1 = pars['tau_E1'], pars['a_E1'], pars['theta_E1']
+  tau_E2, a_E2, theta_E2 = pars['tau_E2'], pars['a_E2'], pars['theta_E2']
+  wE1E1, wE1E2 = pars['wE1E1'], pars['wE1E2']
+  wE2E1, wE2E2 = pars['wE2E1'], pars['wE2E2']
+  I_ext_E1, I_ext_E2, I_ext_I = pars['I_ext_E1'], pars['I_ext_E2'], pars['I_ext_I']
+  gamma = pars['gamma']
+  wIE1, wIE2, wII, wE1I, wE2I = pars['wIE1'],pars['wIE2'],pars['wII'], pars['wE1I'], pars['wE2I']
+  range_t = pars['range_t']
+  #get length of time
+  Lt = range_t.size
+  #Initialize a matrix
+  rE1_trials=np.zeros((n_times, Lt))
+  rE2_trials=np.zeros((n_times, Lt))
+  rI_trials=np.zeros((n_times, Lt))
+
+  #Iterate
+  for i in range(n_times):
+      #Simulate a noisy input
+      I_task_E1, I_task_E2 = get_task_input(p, I_correct, I_incorrect, **pars)
+      #Simulate a trajectory
+      rE1, rE2, rI = simulate_task_wc(I_task_E1, I_task_E2, **other_pars)
+      #save values
+      rE1_trials[i,:]=rE1
+      rE2_trials[i,:]=rE2
+      rI_trials[i,:]=rI
+  return(rE1_trials, rE2_trials, rI_trials)
+
+def plot_task_simulation(n_times, rE1_trials, rE2_trials, rI_trials):
+  """
+  Plot the results of simulate_task_manytimes
+  """
+  plt.figure()
+  for i in range(n_times):
+      plt.plot(rE1_trials[i,:], 'r', alpha=0.5)
+      plt.plot(rE2_trials[i,:], 'g', alpha=0.5)
+      # plt.plot(rI_trials[i,:], 'b', alpha=0.5)
+  plt.ylabel('Activity')
+  plt.show()
+
+
+n_times=20
+I_correct=2
+I_incorrect=1
+
+rE1_trials, rE2_trials, rI_trials = simulate_task_manytimes(n_times=n_times, p=0.49, I_correct=I_correct,
+                                                            I_incorrect=I_incorrect, **pars)
+
+plot_task_simulation(n_times, rE1_trials, rE2_trials, rI_trials)
