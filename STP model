@@ -1,0 +1,69 @@
+def simulate_task_wc_stp(I_ext_E1, I_ext_E2, tau_E1, a_E1, theta_E1, tau_E2, a_E2, theta_E2, tau_I, a_I, theta_I,
+                wE1E1, wE2E2, wE1E2, wE2E1, wE1I, wE2I, wIE1, wIE2, wII, I_ext_I,
+                rE1_init, rE2_init, rI_init, dt, range_t, gamma, tau_s, tau_u, tau_x, U, x_init, u_init, s_init, **other_pars):
+  """
+  Simulate the Wilson-Cowan equations
+  Args:
+    Parameters of the Wilson-Cowan model
+
+  Returns:
+    rE1, rE2, rI (arrays) : Activity of excitatory and inhibitory populations
+  """
+
+# Initialize activity arrays
+  Lt = range_t.size
+  rE1 = np.append(0.5, np.zeros(Lt - 1))
+  rE2 = np.append(0.5, np.zeros(Lt - 1))
+  rI = np.append(rI_init, np.zeros(Lt - 1))
+  I_ext_E1 = I_task_E1
+  I_ext_E2 = I_task_E2
+  I_ext_I = 0 * np.ones(Lt)
+  #Initialize STP arrays
+  sE1 = np.append(s_init, np.zeros(Lt - 1))
+  sE2 = np.append(s_init, np.zeros(Lt - 1))
+  xE1 = np.append(x_init, np.zeros(Lt - 1))
+  xE2 = np.append(x_init, np.zeros(Lt - 1))
+  uE1 = np.append(u_init, np.zeros(Lt - 1))
+  uE2 = np.append(u_init, np.zeros(Lt - 1))
+
+  # Simulate the Wilson-Cowan equations
+  for k in range(Lt - 1):
+
+    rI[k] = (gamma*(wIE1*sE1[k] + wIE2*sE2[k] + I_ext_I[k]))/(1+gamma*wII)
+    #calculate the derivative of u
+    duE1 = dt * (-((uE1[k]-U)/tau_u) + U*(1-uE1[k])*rE1[k])
+    duE2 = dt * (-((uE2[k]-U)/tau_u) + U*(1-uE2[k])*rE2[k])
+
+    #calculate the derivative of x
+    dxE1 = dt * (-((xE1[k]-1)/tau_x) - (uE1[k])*xE1[k]*rE1[k])
+    dxE2 = dt * (-((xE2[k]-1)/tau_x) - (uE2[k])*xE2[k]*rE2[k])
+
+    #calculate the derivative of s
+    dsE1 = dt * (-((sE1[k])/tau_s) + (uE1[k])*xE1[k]*rE1[k])
+    dsE2 = dt * (-((sE2[k])/tau_s) + (uE2[k])*xE2[k]*rE2[k])
+
+    # Calculate the derivative of the E1 population
+    drE1 = dt / tau_E1 * (-rE1[k] + F(wE1E1 * sE1[k] + wE1E2 * sE2[k] - wE1I * rI[k] + I_ext_E1[k],
+                                   a_E1, theta_E1))
+
+    # Calculate the derivative of the E2 population
+    drE2 = dt / tau_E2 * (-rE2[k] + F(wE2E2 * sE2[k] + wE2E1 * sE1[k] - wE2I * rI[k] + I_ext_E2[k],
+                                   a_E2, theta_E2))
+
+    ### Integration ###
+
+    # Update firing rates using Euler's method
+    rE1[k + 1] = rE1[k] + drE1
+    rE2[k + 1] = rE2[k] + drE2
+
+    #update plasticity parameters using Euler's method
+    uE1[k + 1] = uE1[k] + duE1
+    uE2[k + 1] = uE2[k] + duE2
+
+    xE1[k + 1] = xE1[k] + dxE1
+    xE2[k + 1] = xE2[k] + dxE2
+
+    sE1[k + 1] = sE1[k] + dsE1
+    sE2[k + 1] = sE2[k] + dsE2
+
+  return rE1, rE2, rI
